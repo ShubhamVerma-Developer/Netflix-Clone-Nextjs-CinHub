@@ -8,7 +8,7 @@ function HeroCard({ trendingMovie }: { trendingMovie: Movie }) {
     <div className="hero">
       <div className="hero-bg">
         <img
-          src={`${baseImgUrl} ${
+          src={`${baseImgUrl}${
             trendingMovie?.backdrop_path || trendingMovie?.poster_path
           }`}
         />
