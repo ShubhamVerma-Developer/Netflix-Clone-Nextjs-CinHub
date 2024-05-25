@@ -32,14 +32,31 @@ jobs:
           npm install
           npm run build --if-present
 
-      - name: Zip artifact for deployment
-        run: zip release.zip ./* -r
+      - name: 📂 Copy standalone into the root
+        run: cp -R ./.next/standalone ./site-deploy
 
-      - name: Upload artifact for deployment job
-        uses: actions/upload-artifact@v3
+      - name: 📂 Copy static into the .next folder
+        run: cp -R ./.next/static ./site-deploy/.next/static
+
+      - name: 📂 Copy Public folder
+        run: cp -R ./public ./site-deploy/public
+
+      - name: 📦 Package Next application
+        run: |
+          cd ./site-deploy
+          zip Nextjs-site.zip ./* .next -qr
+
+      - name: 🔍 Diagnostics
+        run: |
+          ls ./src
+          ls ./src/.next
+          ls ./site-deploy
+          
+      - name: ⬆️ Publish Next Application artifact
+        uses: actions/upload-artifact@v4
         with:
-          name: node-app
-          path: release.zip
+          name: Nextjs-site
+          path: ./site-deploy/Nextjs-site.zip
 
   deploy:
     runs-on: ubuntu-latest
@@ -51,20 +68,23 @@ jobs:
     env:
       NEXT_PUBLIC_ACCESS_TOKEN: ${{ secrets.NEXT_PUBLIC_ACCESS_TOKEN }}
       NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
-
+     
     steps:
-      - name: Download artifact from build job
-        uses: actions/download-artifact@v3
+      - name: 🍏 Set up Node.js version
+        uses: actions/setup-node@v4
         with:
-          name: node-app
+          node-version: '20.x'
 
+      - name: ⬇️ Download artifact from build job
+        uses: actions/download-artifact@v4
+        with:
+          name: Nextjs-site
+          
       - name: Print environment variables
         run: |
           echo "NEXT_PUBLIC_ACCESS_TOKEN=${{ secrets.NEXT_PUBLIC_ACCESS_TOKEN }}"
           echo "NEXT_PUBLIC_API_URL=${{ secrets.NEXT_PUBLIC_API_URL }}"
 
-      - name: Unzip artifact for deployment
-        run: unzip release.zip
 
       - name: 'Deploy to Azure Web App'
         id: deploy-to-webapp
